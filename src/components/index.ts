@@ -12,4 +12,7 @@ export * from './order-info';
 export * from './order-status';
 export * from './orders-list';
 export * from './profile-menu';
+<<<<<<< HEAD
 export * from './protected-route'; // Добавляем экспорт
+=======
+>>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6

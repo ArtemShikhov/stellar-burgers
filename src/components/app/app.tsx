@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   BrowserRouter,
   Routes,
@@ -113,6 +114,24 @@ const AppContent = () => {
 
   return (
     <div className={styles.app}>
+=======
+import { ConstructorPage } from '@pages';
+import '../../index.css';
+import styles from './app.module.css';
+
+import { AppHeader } from '@components';
+import { Preloader } from '@ui';
+
+const App = () => {
+  /** TODO: взять переменные из стора */
+  const isIngredientsLoading = false;
+  const ingredients = [];
+  const error = null;
+
+  return (
+    <div className={styles.app}>
+      <AppHeader />
+>>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6
       {isIngredientsLoading ? (
         <Preloader />
       ) : error ? (
@@ -120,16 +139,24 @@ const AppContent = () => {
           {error}
         </div>
       ) : ingredients.length > 0 ? (
+<<<<<<< HEAD
         <AppWithModal />
       ) : (
         <div className={`${styles.title} text text_type_main-medium pt-4`}>
           Нет ингредиентов
+=======
+        <ConstructorPage />
+      ) : (
+        <div className={`${styles.title} text text_type_main-medium pt-4`}>
+          Нет игредиентов
+>>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6
         </div>
       )}
     </div>
   );
 };
 
+<<<<<<< HEAD
 // Основной компонент App, оборачивающий всё приложение в Provider
 const App = () => {
   return (
@@ -142,3 +169,6 @@ const App = () => {
 };
 
 export default App;
+=======
+export default App;
+>>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6
