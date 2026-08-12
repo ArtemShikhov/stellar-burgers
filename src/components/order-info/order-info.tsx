@@ -1,21 +1,42 @@
-import { FC, useMemo } from 'react';
-import { Preloader } from '../ui/preloader';
-import { OrderInfoUI } from '../ui/order-info';
+import { FC, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
+import { Preloader } from '@ui';
+import { OrderInfoUI } from '@ui';
 import { TIngredient } from '@utils-types';
+import { useDispatch, useSelector } from '../../services/store';
+import {
+  selectFeedOrders,
+  selectProfileOrders,
+  selectOrderModalData,
+  selectOrderByNumber,
+  selectIngredientsItems
+} from '@selectors';
+import { fetchOrderByNumber } from '@slices';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const { number } = useParams<{ number: string }>();
+  const orderNumber = Number(number);
+  const dispatch = useDispatch();
 
-  const ingredients: TIngredient[] = [];
+  const feedOrders = useSelector(selectFeedOrders);
+  const profileOrders = useSelector(selectProfileOrders);
+  const orderModalData = useSelector(selectOrderModalData);
+  const fetchedOrder = useSelector(selectOrderByNumber);
+  const ingredients: TIngredient[] = useSelector(selectIngredientsItems);
+
+  const orderData = useMemo(
+    () =>
+      [...feedOrders, ...profileOrders, orderModalData, fetchedOrder].find(
+        (order) => order && order.number === orderNumber
+      ) ?? null,
+    [feedOrders, profileOrders, orderModalData, fetchedOrder, orderNumber]
+  );
+
+  useEffect(() => {
+    if (!orderData && orderNumber) {
+      dispatch(fetchOrderByNumber(orderNumber));
+    }
+  }, [orderData, orderNumber, dispatch]);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {

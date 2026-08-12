@@ -1,63 +1,55 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-// Импортируйте функцию запроса из вашего API файла
-import { getIngredientsApi } from '../../utils/burger-api';
-import { TIngredient } from '../../utils/types'; // Типы могут быть уже заданы
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { getIngredientsApi } from '@api';
+import { TIngredient } from '@utils-types';
 
-// Асинхронный thunk для получения ингредиентов
 export const fetchIngredients = createAsyncThunk(
   'ingredients/fetchAll',
-  async (_, { rejectWithValue }) => {
-    try {
-      const data = await getIngredientsApi();
-      return data;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Ошибка загрузки');
-    }
-  }
+  async () => getIngredientsApi()
 );
 
-// Определение типа состояния
-interface IngredientsState {
+type TIngredientsState = {
   items: TIngredient[];
-  loading: boolean;
+  isLoading: boolean;
   error: string | null;
-}
+};
 
-// Начальное состояние
-const initialState: IngredientsState = {
+const initialState: TIngredientsState = {
   items: [],
-  loading: false,
+  isLoading: false,
   error: null
 };
 
-// Создание слайса
 const ingredientsSlice = createSlice({
   name: 'ingredients',
   initialState,
   reducers: {},
+  selectors: {
+    selectIngredientsItems: (state) => state.items,
+    selectIngredientsLoading: (state) => state.isLoading,
+    selectIngredientsError: (state) => state.error
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchIngredients.pending, (state) => {
-        state.loading = true;
+        state.isLoading = true;
         state.error = null;
       })
-      .addCase(
-        fetchIngredients.fulfilled,
-        (state, action: PayloadAction<TIngredient[]>) => {
-          state.loading = false;
-          state.items = action.payload;
-        }
-      )
+      .addCase(fetchIngredients.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
       .addCase(fetchIngredients.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to fetch ingredients';
+        state.isLoading = false;
+        state.error =
+          action.error.message ?? 'Не удалось загрузить ингредиенты';
       });
   }
 });
 
-// Создание селекторов вне слайса
-export const selectItems = (state: { ingredients: typeof initialState }) => state.ingredients.items;
-export const selectLoading = (state: { ingredients: typeof initialState }) => state.ingredients.loading;
-export const selectError = (state: { ingredients: typeof initialState }) => state.ingredients.error;
+export const {
+  selectIngredientsItems,
+  selectIngredientsLoading,
+  selectIngredientsError
+} = ingredientsSlice.selectors;
 
 export default ingredientsSlice.reducer;

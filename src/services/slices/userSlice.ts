@@ -1,32 +1,79 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-// Импорты API функций, например:
-// import { getUserData, updateUserProfile } from '../../utils/burger-api';
-import { TUser } from '../../utils/types'; // Предполагаемый тип пользователя
+import {
+  getUserApi,
+  loginUserApi,
+  registerUserApi,
+  logoutApi,
+  updateUserApi,
+  TLoginData,
+  TRegisterData
+} from '@api';
+import { setCookie, getCookie, deleteCookie } from '../../utils/cookie';
+import { TUser } from '@utils-types';
 
-// Пример асинхронного thunk для получения данных пользователя
-// export const fetchUserData = createAsyncThunk(
-//   'user/fetchData',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await getUserData();
-//       return response.user;
-//     } catch (error: any) {
-//       return rejectWithValue(error.message || 'Ошибка получения данных');
-//     }
-//   }
-// );
+const setTokens = (accessToken: string, refreshToken: string) => {
+  setCookie('accessToken', accessToken);
+  localStorage.setItem('refreshToken', refreshToken);
+};
 
-interface UserState {
+const clearTokens = () => {
+  deleteCookie('accessToken');
+  localStorage.removeItem('refreshToken');
+};
+
+export const checkUserAuth = createAsyncThunk(
+  'user/checkAuth',
+  async (_, { dispatch }) => {
+    if (getCookie('accessToken')) {
+      const data = await getUserApi();
+      return data.user;
+    }
+    return null;
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  'user/login',
+  async (data: TLoginData) => {
+    const res = await loginUserApi(data);
+    setTokens(res.accessToken, res.refreshToken);
+    return res.user;
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  'user/register',
+  async (data: TRegisterData) => {
+    const res = await registerUserApi(data);
+    setTokens(res.accessToken, res.refreshToken);
+    return res.user;
+  }
+);
+
+export const logoutUser = createAsyncThunk('user/logout', async () => {
+  await logoutApi();
+  clearTokens();
+});
+
+export const updateUser = createAsyncThunk(
+  'user/update',
+  async (data: Partial<TRegisterData>) => {
+    const res = await updateUserApi(data);
+    return res.user;
+  }
+);
+
+type TUserState = {
   user: TUser | null;
-  isAuthChecked: boolean; // Флаг, показывающий, была ли проверка авторизации
-  loading: boolean;
+  isAuthChecked: boolean;
+  isLoading: boolean;
   error: string | null;
-}
+};
 
-const initialState: UserState = {
+const initialState: TUserState = {
   user: null,
-  isAuthChecked: false, // Изначально проверка не пройдена
-  loading: false,
+  isAuthChecked: false,
+  isLoading: false,
   error: null
 };
 
@@ -34,38 +81,79 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    // Редьюсер для установки флага проверки авторизации (например, после проверки токена)
-    setAuthChecked: (state, action: PayloadAction<boolean>) => {
-      state.isAuthChecked = action.payload;
-    },
-    // Редьюсер для установки данных пользователя
-    setUser: (state, action: PayloadAction<TUser>) => {
+    setUser: (state, action: PayloadAction<TUser | null>) => {
       state.user = action.payload;
-    },
-    // Редьюсер для сброса данных пользователя при выходе
-    logout: (state) => {
-      state.user = null;
-      state.isAuthChecked = false;
     }
+  },
+  selectors: {
+    selectUser: (state) => state.user,
+    selectIsAuthChecked: (state) => state.isAuthChecked,
+    selectIsAuthenticated: (state) => !!state.user,
+    selectUserError: (state) => state.error,
+    selectUserLoading: (state) => state.isLoading
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(checkUserAuth.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthChecked = true;
+      })
+      .addCase(checkUserAuth.rejected, (state) => {
+        state.user = null;
+        state.isAuthChecked = true;
+      })
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthChecked = true;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message ?? 'Не удалось войти';
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+        state.isAuthChecked = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message ?? 'Не удалось зарегистрироваться';
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+      })
+      .addCase(updateUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = action.payload;
+      })
+      .addCase(updateUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.error.message ?? 'Не удалось обновить данные';
+      });
   }
-  // extraReducers: (builder) => {
-  //   builder
-  //     .addCase(fetchUserData.pending, (state) => {
-  //       state.loading = true;
-  //       state.error = null;
-  //     })
-  //     .addCase(fetchUserData.fulfilled, (state, action: PayloadAction<TUser>) => {
-  //       state.loading = false;
-  //       state.user = action.payload;
-  //       state.isAuthChecked = true; // Устанавливаем флаг, если данные успешно получены
-  //     })
-  //     .addCase(fetchUserData.rejected, (state, action) => {
-  //       state.loading = false;
-  //       state.error = action.payload as string || 'Ошибка получения данных';
-  //       state.isAuthChecked = true; // Устанавливаем флаг, даже при ошибке, чтобы прекратить ожидание
-  //     });
-  // },
 });
 
-export const { setAuthChecked, setUser, logout } = userSlice.actions;
-export const userReducer = userSlice.reducer;
+export const { setUser } = userSlice.actions;
+
+export const {
+  selectUser,
+  selectIsAuthChecked,
+  selectIsAuthenticated,
+  selectUserError,
+  selectUserLoading
+} = userSlice.selectors;
+
+export default userSlice.reducer;

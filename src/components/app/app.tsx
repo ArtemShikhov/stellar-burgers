@@ -1,51 +1,88 @@
-<<<<<<< HEAD
+import { FC, useEffect } from 'react';
 import {
-  BrowserRouter,
   Routes,
   Route,
-  Navigate,
   useLocation,
-  useNavigate
-} from 'react-router-dom'; // Добавлен useNavigate
-import { Provider, useSelector } from 'react-redux'; // Импортируем Provider и useSelector
-import { store, RootState } from '../../services/store'; // Импортируем store и RootState
-import { ConstructorPage } from '../../pages/constructor-page';
-import '../../index.module.css';
+  useNavigate,
+  Location
+} from 'react-router-dom';
+
+import '../../index.css';
 import styles from './app.module.css';
 
-import { AppHeader } from '../app-header/app-header';
-import { Preloader } from '../ui/preloader/preloader'; // Исправлен путь к Preloader
-import { Login } from '../../pages/login';
-import { Register } from '../../pages/register';
-import { ForgotPassword } from '../../pages/forgot-password';
-import { ResetPassword } from '../../pages/reset-password';
-import { Profile } from '../../pages/profile';
-import { Feed } from '../../pages/feed';
-import { ProfileOrders } from '../../pages/profile-orders';
-import { NotFound404 } from '../../pages/not-fount-404'; // Исправлено имя папки
-import { IngredientDetails } from '../ingredient-details/ingredient-details';
-import { Modal } from '../modal/modal';
-import { OrderInfo } from '../order-info/order-info';
-import { ProtectedRoute } from '../protected-route/protected-route'; // Импорт защищенного маршрута
+import { AppHeader, IngredientDetails, OrderInfo, Modal } from '@components';
+import { ProtectedRoute } from '@components';
+import {
+  ConstructorPage,
+  Feed,
+  Login,
+  Register,
+  ForgotPassword,
+  ResetPassword,
+  Profile,
+  ProfileOrders,
+  NotFound404
+} from '@pages';
+import { useDispatch } from '../../services/store';
+import { fetchIngredients } from '@slices';
+import { checkUserAuth } from '@slices';
 
-// Компонент для условной отрисовки модального окна
-const AppWithModal = () => {
+const App: FC = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
-  const navigate = useNavigate(); // Добавлен хук navigate
-  const backgroundLocation = location.state?.background;
+  const navigate = useNavigate();
+
+  const state = location.state as { background?: Location };
+  const background = state && state.background;
+
+  useEffect(() => {
+    dispatch(fetchIngredients());
+    dispatch(checkUserAuth());
+  }, [dispatch]);
+
+  const handleModalClose = () => navigate(-1);
 
   return (
-    <>
+    <div className={styles.app}>
       <AppHeader />
-      {/* Основной маршрут */}
-      <Routes location={backgroundLocation || location}>
+      <Routes location={background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/reset-password' element={<ResetPassword />} />
-        {/* Защищенные маршруты */}
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
+
+        <Route
+          path='/login'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <Login />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/register'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <Register />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/forgot-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ForgotPassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/reset-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ResetPassword />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path='/profile'
           element={
@@ -62,21 +99,24 @@ const AppWithModal = () => {
             </ProtectedRoute>
           }
         />
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
-        <Route path='/feed/:number' element={<OrderInfo />} />
-        <Route path='/profile/orders/:number' element={<OrderInfo />} />
+        <Route
+          path='/profile/orders/:number'
+          element={
+            <ProtectedRoute>
+              <OrderInfo />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path='*' element={<NotFound404 />} />
       </Routes>
 
-      {/* Модальное окно поверх основного маршрута */}
-      {backgroundLocation && (
+      {background && (
         <Routes>
           <Route
             path='/ingredients/:id'
             element={
-              <Modal title='Детали ингредиента' onClose={() => navigate(-1)}>
-                {' '}
-                {/* Добавлен onClose */}
+              <Modal title='Детали ингредиента' onClose={handleModalClose}>
                 <IngredientDetails />
               </Modal>
             }
@@ -84,9 +124,7 @@ const AppWithModal = () => {
           <Route
             path='/feed/:number'
             element={
-              <Modal title='Детали заказа' onClose={() => navigate(-1)}>
-                {' '}
-                {/* Добавлен onClose */}
+              <Modal title='' onClose={handleModalClose}>
                 <OrderInfo />
               </Modal>
             }
@@ -94,81 +132,17 @@ const AppWithModal = () => {
           <Route
             path='/profile/orders/:number'
             element={
-              <Modal title='Детали заказа' onClose={() => navigate(-1)}>
-                {' '}
-                {/* Добавлен onClose */}
-                <OrderInfo />
-              </Modal>
+              <ProtectedRoute>
+                <Modal title='' onClose={handleModalClose}>
+                  <OrderInfo />
+                </Modal>
+              </ProtectedRoute>
             }
           />
         </Routes>
-      )}
-    </>
-  );
-};
-
-// Внутренний компонент App, который использует данные из стора
-const AppContent = () => {
-  // Используем useSelector для получения состояния из Redux
-  const { items: ingredients, loading: isIngredientsLoading, error } = useSelector((state: RootState) => state.ingredients);
-
-  return (
-    <div className={styles.app}>
-=======
-import { ConstructorPage } from '@pages';
-import '../../index.css';
-import styles from './app.module.css';
-
-import { AppHeader } from '@components';
-import { Preloader } from '@ui';
-
-const App = () => {
-  /** TODO: взять переменные из стора */
-  const isIngredientsLoading = false;
-  const ingredients = [];
-  const error = null;
-
-  return (
-    <div className={styles.app}>
-      <AppHeader />
->>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6
-      {isIngredientsLoading ? (
-        <Preloader />
-      ) : error ? (
-        <div className={`${styles.error} text text_type_main-medium pt-4`}>
-          {error}
-        </div>
-      ) : ingredients.length > 0 ? (
-<<<<<<< HEAD
-        <AppWithModal />
-      ) : (
-        <div className={`${styles.title} text text_type_main-medium pt-4`}>
-          Нет ингредиентов
-=======
-        <ConstructorPage />
-      ) : (
-        <div className={`${styles.title} text text_type_main-medium pt-4`}>
-          Нет игредиентов
->>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6
-        </div>
       )}
     </div>
   );
 };
 
-<<<<<<< HEAD
-// Основной компонент App, оборачивающий всё приложение в Provider
-const App = () => {
-  return (
-    <Provider store={store}>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </Provider>
-  );
-};
-
 export default App;
-=======
-export default App;
->>>>>>> 491ec180fb55cb0b9b556214cef1ba9dca534cc6

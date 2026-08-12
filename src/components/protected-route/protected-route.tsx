@@ -1,33 +1,34 @@
-import React, { ReactElement } from 'react';
-import { useSelector } from 'react-redux';
+import { FC, ReactElement } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
-import { RootState } from '../../services/store'; // Импорт типизированного хука из вашего store
+import { useSelector } from '../../services/store';
+import { selectIsAuthChecked, selectIsAuthenticated } from '@selectors';
+import { Preloader } from '@ui';
 
 type ProtectedRouteProps = {
   children: ReactElement;
+  onlyUnAuth?: boolean;
 };
 
-// Предполагается, что состояние авторизации будет в store.state.user
-// Примерная структура: { isAuthChecked: boolean, user: object | null }
-export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+export const ProtectedRoute: FC<ProtectedRouteProps> = ({
+  children,
+  onlyUnAuth = false
+}) => {
   const location = useLocation();
-  // Получаем состояние авторизации из Redux
-  const isAuthChecked = useSelector(
-    (state: RootState) => state.user.isAuthChecked
-  );
-  const user = useSelector((state: RootState) => state.user.user);
+  const isAuthChecked = useSelector(selectIsAuthChecked);
+  const isAuthenticated = useSelector(selectIsAuthenticated);
 
-  // Если проверка авторизации еще не завершена, можно вернуть лоадер
-  // if (!isAuthChecked) {
-  //   return <Preloader />; // или другой компонент загрузки
-  // }
+  if (!isAuthChecked) {
+    return <Preloader />;
+  }
 
-  // Если пользователь не авторизован, перенаправляем на страницу входа
-  if (!user) {
-    // Сохраняем предыдущий маршрут, чтобы вернуться после успешного входа
+  if (!onlyUnAuth && !isAuthenticated) {
     return <Navigate to='/login' state={{ from: location }} replace />;
   }
 
-  // Если пользователь авторизован, отображаем дочерние элементы
+  if (onlyUnAuth && isAuthenticated) {
+    const from = (location.state as { from?: Location })?.from;
+    return <Navigate to={from ?? '/'} replace />;
+  }
+
   return children;
 };
