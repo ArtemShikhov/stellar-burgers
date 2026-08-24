@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction, nanoid } from '@reduxjs/toolkit';
 import { TConstructorIngredient, TIngredient } from '@utils-types';
-import { createOrder } from './orderSlice';
 
 type TConstructorState = {
   bun: TConstructorIngredient | null;
@@ -52,15 +51,6 @@ const constructorSlice = createSlice({
   },
   selectors: {
     selectConstructorItems: (state) => state
-  },
-  extraReducers: (builder) => {
-    // Конструктор очищается только после положительного ответа сервера
-    // на запрос создания заказа, а не при закрытии модалки вручную —
-    // так пользователь не теряет собранный бургер при ошибке/ожидании.
-    builder.addCase(createOrder.fulfilled, (state) => {
-      state.bun = null;
-      state.ingredients = [];
-    });
   }
 });
 
