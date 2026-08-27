@@ -75,12 +75,7 @@ export const BurgerConstructorUI: FC<BurgerConstructorUIProps> = ({
     )}
     <div className={`${styles.total} mt-10 mr-4`}>
       <div className={`${styles.cost} mr-10`}>
-        <p
-          className={`text ${styles.text} mr-2`}
-          data-testid='order-total-price'
-        >
-          {price}
-        </p>
+        <p className={`text ${styles.text} mr-2`}>{price}</p>
         <CurrencyIcon type='primary' />
       </div>
       <Button
