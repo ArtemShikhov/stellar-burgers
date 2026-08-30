@@ -9,7 +9,7 @@ import {
   selectOrderModalData,
   selectIsAuthenticated
 } from '@selectors';
-import { createOrder, resetOrderModalData, resetConstructor } from '@slices';
+import { createOrder, resetOrderModalData } from '@slices';
 
 export const BurgerConstructor: FC = () => {
   const dispatch = useDispatch();
@@ -39,7 +39,6 @@ export const BurgerConstructor: FC = () => {
 
   const closeOrderModal = () => {
     dispatch(resetOrderModalData());
-    dispatch(resetConstructor());
   };
 
   const price = useMemo(
