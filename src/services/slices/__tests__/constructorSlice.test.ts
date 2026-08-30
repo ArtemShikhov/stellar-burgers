@@ -15,6 +15,8 @@ import { TIngredient, TConstructorIngredient } from '@utils-types';
  * createOrder.fulfilled из соседнего слайса заказа.
  */
 describe('constructorSlice reducer', () => {
+  const EMPTY_STATE = { bun: null, ingredients: [] };
+
   const bun: TIngredient = {
     _id: 'bun-1',
     name: 'Краторная булка N-200i',
@@ -60,10 +62,7 @@ describe('constructorSlice reducer', () => {
   it('должен вернуть начальное состояние при вызове с undefined и неизвестным экшеном', () => {
     const state = reducer(undefined, { type: 'UNKNOWN' });
 
-    expect(state).toEqual({
-      bun: null,
-      ingredients: []
-    });
+    expect(state).toEqual(EMPTY_STATE);
   });
 
   it('не должен менять состояние при неизвестном экшене', () => {
@@ -147,7 +146,7 @@ describe('constructorSlice reducer', () => {
 
     state = reducer(state, resetConstructor());
 
-    expect(state).toEqual({ bun: null, ingredients: [] });
+    expect(state).toEqual(EMPTY_STATE);
   });
 
   it('createOrder.fulfilled (экшен из orderSlice) должен очищать конструктор после успешного заказа', () => {
@@ -178,7 +177,7 @@ describe('constructorSlice reducer', () => {
 
     state = reducer(state, action);
 
-    expect(state).toEqual({ bun: null, ingredients: [] });
+    expect(state).toEqual(EMPTY_STATE);
   });
 
   it('селектор selectConstructorItems должен возвращать актуальное состояние конструктора', () => {
